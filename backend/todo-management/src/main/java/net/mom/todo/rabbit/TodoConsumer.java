@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.mom.todo.dto.TodoDto;
 import net.mom.todo.service.TodoService;
+import net.mom.todo.service.impl.EmailServiceImpl;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class TodoConsumer {
 
     private final TodoService todoService;
-
+    private final EmailServiceImpl emailService;
 
     @Retryable(
             value = { Exception.class },
@@ -29,10 +30,18 @@ public class TodoConsumer {
             
             todoService.addTodo(todoDto);
             log.info("Todo saved successfully.");
+           try {
+                emailService.sendEmail(
+                        todoDto.getEmail(),
+                        "New task with id " + todoDto.getId() + " added!",
+                        "Hi There, you added a new task: " + todoDto.getDescription() + " which you marked its completeness as " + todoDto.isCompleted() + "."
+                );
+                log.info("Email sent successfully for todo with id " + todoDto.getId());
+            } catch (Exception e) {
+                log.error("Failed to send email for todo with id " + todoDto.getId(), e);}
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage());
             throw e; // triggers retry
         }
     }
-
 }
