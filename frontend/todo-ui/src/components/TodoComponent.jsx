@@ -63,7 +63,7 @@ const TodoComponent = () => {
         if(id){
             getTodo(id).then((response) => {
                 console.log(response.data)
-                setTitle(response.data.email)
+                setEmail(response.data.email)
                 setDescription(response.data.description)
                 setCompleted(response.data.completed)
             }).catch(error => {
